@@ -1,0 +1,6 @@
+# Build artifacts
+build/
+
+# NASM outputs
+*.bin
+*.img
