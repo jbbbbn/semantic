@@ -46,6 +46,11 @@ main:
         CALL newline
 
         MOV SI, input_buffer
+        MOV DI, cmd_ver
+        CALL strcmp
+        JE .do_ver
+
+        MOV SI, input_buffer
         MOV DI, cmd_help
         CALL strcmp
         JE .do_help
@@ -56,6 +61,10 @@ main:
         JE .do_cls
 
         JMP .unknown_command
+
+        .do_ver:
+            CALL ver
+            JMP main
 
         .do_help:
             CALL help
@@ -119,6 +128,12 @@ strcmp:
     .equal:
         RET               ; ZF = 1
 
+ver:
+    MOV SI, ver_text
+    CALL print
+    CALL newline
+    RET
+
 help:
     MOV SI, help_text
     CALL print
@@ -163,6 +178,13 @@ prompt:
 
 input_buffer:
     times 64 db 0
+; ==========================================
+; SYSTEM COMMANDS
+
+cmd_ver:
+    db "VER", 0
+
+; ==========================================
 
 cmd_help:
     db "HELP", 0
@@ -171,11 +193,15 @@ cmd_cls:
     db "CLS", 0
 
 help_text:
+    db "CLS   - clears the screen",0x0D,0x0A
     db "HELP  - shows available commands",0x0D,0x0A
-    db "CLS   - clears the screen",0
+    db "VER   - shows system version",0
 
 unknown_text:
     db "Unknown command", 0
+
+ver_text:
+    db "Semantic 0.6", 0
 
 ; ==========================================
 ; BOOT SIGNATURE
