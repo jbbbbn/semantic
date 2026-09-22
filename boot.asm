@@ -50,10 +50,19 @@ main:
         CALL strcmp
         JE .do_help
 
+        MOV SI, input_buffer
+        MOV DI, cmd_cls
+        CALL strcmp
+        JE .do_cls
+
         JMP .unknown_command
 
         .do_help:
             CALL help
+            JMP main
+
+        .do_cls:
+            CALL cls
             JMP main
 
         .unknown_command:
@@ -116,6 +125,26 @@ help:
     CALL newline
     RET
 
+cls:
+    MOV AH, 0x06      ; Scroll Up Window
+    MOV AL, 0x00      ; 0 = clear entire window
+
+    MOV BH, 0x07      ; White on black
+
+    MOV CX, 0x0000    ; Top-left corner
+    MOV DX, 0x184F    ; Bottom-right (25x80)
+
+    INT 0x10
+
+    ; Move cursor to (0,0)
+    MOV AH, 0x02
+    MOV BH, 0x00
+    MOV DH, 0x00
+    MOV DL, 0x00
+    INT 0x10
+
+    RET
+
 unknown:
     MOV SI, unknown_text
     CALL print
@@ -138,8 +167,12 @@ input_buffer:
 cmd_help:
     db "HELP", 0
 
+cmd_cls:
+    db "CLS", 0
+
 help_text:
-    db "HELP:   shows available commands", 0
+    db "HELP  - shows available commands",0x0D,0x0A
+    db "CLS   - clears the screen",0
 
 unknown_text:
     db "Unknown command", 0
