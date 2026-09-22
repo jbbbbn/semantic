@@ -48,6 +48,12 @@ main:
     CALL strcmp
     JE .do_cls
 
+    ; ECHO
+    MOV SI, input_buffer
+    MOV DI, cmd_echo
+    CALL strcmp4
+    JE .do_echo
+
     ; HELP
     MOV SI, input_buffer
     MOV DI, cmd_help
@@ -70,6 +76,10 @@ main:
 
 .do_cls:
     CALL cls
+    JMP main
+
+.do_echo:
+    CALL echo
     JMP main
 
 .do_help:
@@ -159,6 +169,34 @@ strcmp:
 .equal:
     RET
 
+strcmp4:
+    MOV CX, 4
+
+.loop:
+    MOV AL, [SI]
+    MOV BL, [DI]
+
+    CMP AL, BL
+    JNE .not_equal
+
+    INC SI
+    INC DI
+    LOOP .loop
+
+    ; After ECHO, require space or end of string
+    MOV AL, [SI]
+    CMP AL, ' '
+    JE .equal
+
+    CMP AL, 0
+    JE .equal
+
+.not_equal:
+    RET
+
+.equal:
+    RET
+
 cls:
     MOV AH, 0x06
     MOV AL, 0x00
@@ -174,6 +212,17 @@ cls:
     MOV DL, 0x00
     INT 0x10
 
+    RET
+
+echo:
+    CMP BYTE [SI], 0
+    JE .done
+
+    INC SI
+    CALL print
+
+.done:
+    CALL newline
     RET
 
 help:
@@ -234,6 +283,9 @@ input_buffer:
 cmd_cls:
     db "CLS", 0
 
+cmd_echo:
+    db "ECHO", 0
+
 cmd_help:
     db "HELP", 0
 
@@ -245,6 +297,7 @@ cmd_ver:
 
 help_text:
     db "CLS   - clears the screen",0x0D,0x0A
+    db "ECHO  - prints the given text",0x0D,0x0A
     db "HELP  - shows available commands",0x0D,0x0A
     db "TIME  - shows current system time",0x0D,0x0A
     db "VER   - shows system version",0
@@ -253,4 +306,4 @@ unknown_text:
     db "Unknown command", 0
 
 ver_text:
-    db "Semantic 0.8", 0
+    db "Semantic 0.9", 0

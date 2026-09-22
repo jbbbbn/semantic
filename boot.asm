@@ -13,7 +13,7 @@ start:
     MOV SP, 0x7C00
 
     MOV BX, KERNEL_OFFSET
-    MOV DH, 4
+    MOV DH, 8
     MOV DL, [BOOT_DRIVE]
     CALL disk_load
 
