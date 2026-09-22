@@ -27,12 +27,36 @@ main:
     CMP AL, 0x0D
     JE .execute
 
-    ; Store character in buffer
+    CMP AL, 0x08
+    JE .backspace
+
     MOV [DI], AL
     INC DI
 
     ; Echo character
     MOV AH, 0x0E
+    INT 0x10
+
+    JMP .input
+
+.backspace:
+    ; If we're at the beginning, do nothing
+    CMP DI, input_buffer
+    JE .input
+
+    DEC DI
+    MOV BYTE [DI], 0
+
+    ; Erase visually: BS, SPACE, BS
+    MOV AH, 0x0E
+
+    MOV AL, 0x08
+    INT 0x10
+
+    MOV AL, ' '
+    INT 0x10
+
+    MOV AL, 0x08
     INT 0x10
 
     JMP .input
@@ -306,4 +330,4 @@ unknown_text:
     db "Unknown command", 0
 
 ver_text:
-    db "Semantic 0.9", 0
+    db "Semantic 0.10", 0
