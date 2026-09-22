@@ -84,6 +84,12 @@ main:
     CALL strcmp
     JE .do_help
 
+    ; MKFILE
+    MOV SI, input_buffer
+    MOV DI, cmd_mkfile
+    CALL strcmp7
+    JE .do_mkfile
+
     ; TIME
     MOV SI, input_buffer
     MOV DI, cmd_time
@@ -108,6 +114,10 @@ main:
 
 .do_help:
     CALL help
+    JMP main
+
+.do_mkfile:
+    CALL mkfile
     JMP main
 
 .do_time:
@@ -221,6 +231,32 @@ strcmp4:
 .equal:
     RET
 
+strcmp7:
+    MOV CX, 6
+
+.loop:
+    MOV AL, [SI]
+    MOV BL, [DI]
+
+    CMP AL, BL
+    JNE .not_equal
+
+    INC SI
+    INC DI
+    LOOP .loop
+
+    MOV AL, [SI]
+    CMP AL, ' '
+    JE .equal
+    CMP AL, 0
+    JE .equal
+
+.not_equal:
+    RET
+
+.equal:
+    RET
+
 cls:
     MOV AH, 0x06
     MOV AL, 0x00
@@ -251,6 +287,48 @@ echo:
 
 help:
     MOV SI, help_text
+    CALL print
+    CALL newline
+    RET
+
+mkfile:
+    INC SI                  ; Skip the space
+
+    ; Check if a file already exists
+    CMP BYTE [file_exists], 1
+    JNE .create
+
+    PUSH SI                 ; Preserve pointer to new name
+    MOV DI, file_name
+    CALL strcmp
+    POP SI
+
+    JE .already_exists
+
+.create:
+    MOV DI, file_name
+
+.copy:
+    LODSB
+    MOV [DI], AL
+    INC DI
+
+    CMP AL, 0
+    JNE .copy
+
+    MOV BYTE [file_exists], 1
+
+    MOV SI, created_text
+    CALL print
+
+    MOV SI, file_name
+    CALL print
+
+    CALL newline
+    RET
+
+.already_exists:
+    MOV SI, file_exists_text
     CALL print
     CALL newline
     RET
@@ -304,6 +382,12 @@ prompt:
 input_buffer:
     times 64 db 0
 
+file_exists:
+    db 0
+
+file_name:
+    times 32 db 0
+
 cmd_cls:
     db "CLS", 0
 
@@ -313,21 +397,31 @@ cmd_echo:
 cmd_help:
     db "HELP", 0
 
+cmd_mkfile:
+    db "MKFILE", 0
+
 cmd_time:
     db "TIME", 0
 
 cmd_ver:
     db "VER", 0
 
+created_text:
+    db "Created file: ", 0
+
+file_exists_text:
+    db "File already exists", 0
+
 help_text:
-    db "CLS   - clears the screen",0x0D,0x0A
-    db "ECHO  - prints the given text",0x0D,0x0A
-    db "HELP  - shows available commands",0x0D,0x0A
-    db "TIME  - shows current system time",0x0D,0x0A
-    db "VER   - shows system version",0
+    db "CLS                 - clear the screen",0x0D,0x0A
+    db "ECHO <text>         - print text",0x0D,0x0A
+    db "HELP                - show this help",0x0D,0x0A
+    db "MKFILE <filename>   - create a file",0x0D,0x0A
+    db "TIME                - show current time",0x0D,0x0A
+    db "VER                 - show system version",0
 
 unknown_text:
     db "Unknown command", 0
 
 ver_text:
-    db "Semantic 0.10", 0
+    db "Semantic 0.11", 0
